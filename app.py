@@ -1,3 +1,4 @@
+
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.core import Root
@@ -5,6 +6,12 @@ import pandas as pd
 import json
 
 pd.set_option("max_colwidth",None)
+
+st.set_page_config(
+    page_title="Legal Assistance RAG Application",
+    page_icon="https://banner2.cleanpng.com/20180429/dzw/avd1hzie1.webp"
+)
+
 
 ### Default Values
 NUM_CHUNKS = 3 # Num-chunks provided as context. Play with this to check how it affects your accuracy
@@ -50,18 +57,7 @@ def init_snowflake_connection():
 session, root, svc = init_snowflake_connection()
 
 ### Functions
-def config_options():
-    if not session:
-        return
 
-    # Set the generator model directly
-    generator_model = 'mistral-large2'
-    # You can use 'generator_model' in the rest of your code where needed
-
-    try:
-        st.write("Configuration options set.")
-    except Exception as e:
-        st.error(f"Configuration failed: {str(e)}")
 
 def get_similar_chunks_search_service(query):
     if not svc:
@@ -83,14 +79,12 @@ def create_prompt(myquestion):
             return "", set()
 
         prompt = f"""
-           You are an expert chat assistance that extracs information from the CONTEXT provided
-           between <context> and </context> tags.
-           When ansering the question contained between <question> and </question> tags
-           be concise and do not hallucinate. 
-           If you don´t have the information just say so.
-           Only anwer the question if you can extract it from the CONTEXT provideed.
-           
-           Do not mention the CONTEXT used in your answer.
+           You are a highly specialized chatbot designed to extract and process information solely from provided text. 
+           Your responses must be concise, accurate, 
+           and based exclusively on the content between <context> and </context> tags. 
+           Do not generate information that is not explicitly present in the provided text (no hallucinations).
+
+           Your task is to Answer questions enclosed within <question> and </question> tags using only the information within the corresponding context. If the answer cannot be derived from the provided context, respond with "The answer is not in the provided document." Do not mention or reference "context," "document," or similar terms in your answers. Simply provide the direct answer.
     
            <context>          
            {prompt_context}
@@ -139,43 +133,47 @@ def main():
         st.error("Failed to connect to Snowflake. Please check your credentials and try again.")
         return
         
-    st.title(f":speech_balloon: Chat Document Assistant with Snowflake Cortex")
+    st.title(f"Ross:Legal Assistance RAG Application")
     
+    st.sidebar.title("Available Documents")
     try:
-        st.write("This is the list of documents you already have and that will be used to answer your questions:")
         docs_available = session.sql("ls @docs").collect()
         list_docs = []
         for doc in docs_available:
             list_docs.append(doc["name"])
-        st.dataframe(list_docs)
+        st.sidebar.dataframe(list_docs)
     except Exception as e:
-        st.error(f"Failed to fetch document list: {str(e)}")
-        st.write("No documents available or error accessing document store")
-
-    config_options()
+        st.sidebar.error(f"Failed to fetch document list: {str(e)}")
+        st.sidebar.write("No documents available or error accessing document store")
 
     st.session_state.rag = st.sidebar.checkbox('Use your own documents as context?')
 
-    question = st.text_input("Enter question", placeholder="Is there any special lubricant to be used with the premium bike?", label_visibility="collapsed")
+    response, relative_paths = None, "None"
+
+    
+    question = st.text_input("Enter question", placeholder="Is there any legal advice needed regarding contracts?", label_visibility="collapsed")
 
     if question:
         response, relative_paths = complete(question)
-        if response:
-            res_text = response[0].RESPONSE
-            st.markdown(res_text)
 
-            if relative_paths != "None":
-                with st.sidebar.expander("Related Documents"):
-                    try:
-                        for path in relative_paths:
-                            cmd2 = f"select GET_PRESIGNED_URL(@docs, '{path}', 360) as URL_LINK from directory(@docs)"
-                            df_url_link = session.sql(cmd2).to_pandas()
-                            url_link = df_url_link._get_value(0,'URL_LINK')
+    if response:
+        res_text = response[0].RESPONSE
+        st.markdown(res_text)
+
+        if relative_paths != "None":
+            with st.sidebar.expander("Related Documents"):
+                try:
+                    for path in relative_paths:
+                        cmd2 = f"select GET_PRESIGNED_URL(@docs, '{path}', 360) as URL_LINK from directory(@docs)"
+                        df_url_link = session.sql(cmd2).to_pandas()
+                        url_link = df_url_link._get_value(0,'URL_LINK')
                 
-                            display_url = f"Doc: [{path}]({url_link})"
-                            st.sidebar.markdown(display_url)
-                    except Exception as e:
-                        st.sidebar.error(f"Failed to generate document links: {str(e)}")
-                
+                        display_url = f"Doc: [{path}]({url_link})"
+                        st.sidebar.markdown(display_url)
+                except Exception as e:
+                    st.sidebar.error(f"Failed to generate document links: {str(e)}")
+
+    
+
 if __name__ == "__main__":
     main()
