@@ -138,7 +138,14 @@ def main():
     # Display the image as a smaller logo at the top of the app
     st.image('thumbnail.png', width=200)
     st.title(f" PhytoSense: an snowflake and mistral powered RAG Application")
-    st.sidebar.title("Instructions")
+    st.sidebar.title("About App")
+    st.sidebar.write(
+        """
+        **PhytoSense** is a Retrieval-Augmented Generation (RAG) application designed to assist professionals in the field of plant medicinal properties, biochemical research, and plant-based medicine. 
+        By leveraging Snowflake Cortex for data search and Streamlit for the front-end, PhytoSense provides users with precise and contextually relevant information.
+        """
+    )
+
     st.sidebar.title("Available Documents")
     try:
         docs_available = session.sql("ls @docs").collect()
