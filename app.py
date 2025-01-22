@@ -27,6 +27,8 @@ COLUMNS = [
     "relative_path"
 ]
 
+gnerative_model = "mistral-large2"
+
 @st.cache_resource
 def init_snowflake_connection():
     """Initialize Snowflake connection with error handling"""
@@ -124,7 +126,7 @@ def complete(myquestion):
                 select snowflake.cortex.complete(?, ?) as response
               """
         
-        df_response = session.sql(cmd, params=['mistral-large2', prompt]).collect()
+        df_response = session.sql(cmd, params=[gnerative_model, prompt]).collect()
         return df_response, relative_paths
     except Exception as e:
         st.error(f"Completion failed: {str(e)}")
