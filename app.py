@@ -1,4 +1,3 @@
-
 import streamlit as st
 from snowflake.snowpark import Session
 from snowflake.core import Root
@@ -8,7 +7,7 @@ import json
 pd.set_option("max_colwidth",None)
 
 st.set_page_config(
-    page_title="Legal Assistance RAG Application",
+    page_title="PhytoSense: an mistral powered RAG Application",
     page_icon="https://banner2.cleanpng.com/20180429/dzw/avd1hzie1.webp"
 )
 
@@ -133,8 +132,8 @@ def main():
         st.error("Failed to connect to Snowflake. Please check your credentials and try again.")
         return
         
-    st.title(f"Ross:Legal Assistance RAG Application")
-    
+    st.title(f" PhytoSense: an snowflake and mistral powered RAG Application")
+    st.sidebar.title("Instructions")
     st.sidebar.title("Available Documents")
     try:
         docs_available = session.sql("ls @docs").collect()
