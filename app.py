@@ -3,6 +3,7 @@ from snowflake.snowpark import Session
 from snowflake.core import Root
 import pandas as pd
 import json
+from streamlit_lottie import st_lottie
 
 pd.set_option("max_colwidth",None)
 
@@ -83,7 +84,9 @@ def create_prompt(myquestion):
            and based exclusively on the content between <context> and </context> tags. 
            Do not generate information that is not explicitly present in the provided text (no hallucinations).
 
-           Your task is to Answer questions enclosed within <question> and </question> tags using only the information within the corresponding context. If the answer cannot be derived from the provided context, respond with "The answer is not in the provided document." Do not mention or reference "context," "document," or similar terms in your answers. Simply provide the direct answer.
+           Your task is to Answer questions enclosed within <question> and </question> tags using only the information within the corresponding context. 
+           If the answer cannot be derived from the provided context, respond with "The answer is not in the provided document."
+           Do not mention or reference "context," "document," or similar terms in your answers. Simply provide the direct answer.
     
            <context>          
            {prompt_context}
@@ -132,6 +135,8 @@ def main():
         st.error("Failed to connect to Snowflake. Please check your credentials and try again.")
         return
         
+    # Display the image as a smaller logo at the top of the app
+    st.image('thumbnail.png', width=200)
     st.title(f" PhytoSense: an snowflake and mistral powered RAG Application")
     st.sidebar.title("Instructions")
     st.sidebar.title("Available Documents")
@@ -149,8 +154,28 @@ def main():
 
     response, relative_paths = None, "None"
 
-    
-    question = st.text_input("Enter question", placeholder="Is there any legal advice needed regarding contracts?", label_visibility="collapsed")
+    # Sample questions dropdown
+    sample_questions = [
+        "What are the advantages of using edible vaccines?",
+        "What are some examples of potential synergism between plant extracts/essential oils and conventional antimicrobial drugs?",
+        "Why is caution advised when using Goldenseal or other herbs containing berberine for extended periods?",
+        "What analytical techniques are useful for the quality control of medicinal plants?",
+        "What are the challenges in ensuring the quality of herbal medicines?",
+        "What are the main classes of phytochemicals found in plants with potential antimicrobial activity?",
+        "What is the role of hydrophobicity in the antimicrobial action of essential oils?",
+        "What is the mechanism of action of cinnamaldehyde?",
+        "How do the chemical structures of carvacrol and thymol differ, and what is the significance of this difference?"
+    ]
+
+    selected_question = st.selectbox("Select a sample question:", options=["Select a question..."] + sample_questions)
+
+    # Use the selected question as the default in the text input if one is selected
+    question = st.text_input(
+        "Enter question", 
+        value=selected_question if selected_question != "Select a question..." else "",
+        placeholder="What are some safety concerns associated with the use of Alfalfa?",
+        label_visibility="collapsed"
+    )
 
     if question:
         response, relative_paths = complete(question)
@@ -171,6 +196,13 @@ def main():
                         st.sidebar.markdown(display_url)
                 except Exception as e:
                     st.sidebar.error(f"Failed to generate document links: {str(e)}")
+
+    # Load the Lottie animation with UTF-8 encoding
+    with open('plantanimation.json', 'r', encoding='utf-8') as f:
+        lottie_animation = json.load(f)
+
+    # Display the Lottie animation
+    st_lottie(lottie_animation, height=300, key="plant_animation")
 
     
 
