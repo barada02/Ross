@@ -12,7 +12,7 @@ PhytoSense is a Retrieval-Augmented Generation (RAG) application designed to ass
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone [<repository-url>](https://github.com/barada02/Ross.git)
+   git clone https://github.com/barada02/Ross.git
    ```
 2. Navigate to the project directory:
    ```bash
